@@ -36,3 +36,23 @@
     transform: rotate(360deg);
   }
 }
+
+.app-container {
+  display: flex;
+  justify-content: space-between; /* Space evenly between components */
+  align-items: stretch; /* Ensure both components are the same height */
+  gap: 1rem; /* Optional: Add spacing between components */
+}
+
+.app-container > * {
+  flex: 1; /* Make both components take equal width */
+  height: 400px; /* Set equal height for both components */
+  border: 1px solid #ccc; /* Optional: Add border for clarity */
+  box-sizing: border-box; /* Ensure padding doesn't affect size */
+}
+
+.app-container > .scene-container {
+  flex: 0.5; /* Smaller width for SceneContainer */
+  width: 200px; /* Explicit width if needed */
+  border: 1px solid #ccc; /* Optional: Add border for clarity */
+}
