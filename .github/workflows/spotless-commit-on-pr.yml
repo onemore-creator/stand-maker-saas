@@ -1,0 +1,55 @@
+name: Add spotless commit on pull request
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    continue-on-error: true
+
+    steps:
+      # Setup GitHub service account
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.AUTH_PRIVATE_KEY }}
+      # Checkout current branch
+      - name: Git checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+          token: ${{ steps.app-token.outputs.token }}
+      # Get the name of a branch in current PR
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract-branch
+      # Check if we need to apply spotless
+      - name: Check if needed
+        id: spotless-check
+        run: |
+          if mvn spotless:check >> /dev/null; then
+            IS_NEEDED=0
+          else 
+            IS_NEEDED=1
+          fi
+          echo "is_needed=$IS_NEEDED" >> $GITHUB_OUTPUT
+      # Apply spotless if needed
+      - name: Apply spotless if needed
+        if: steps.spotless-check.outputs.is_needed == '1'
+        run: |
+          git checkout ${{ steps.extract-branch.outputs.branch }}
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull
+          mvn spotless:apply >> /dev/null
+          git add .
+          git commit -m "feat: Spotless has been applied by bot to keep our code clean. Enjoy!"
+          git push
